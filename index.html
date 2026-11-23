@@ -123,8 +123,21 @@ nav a.on{color:var(--g2)}
     <div class="card"><p class="lb">Платежи до конца года</p><p class="vl" id="fPay">–</p></div>
   </div>
   <div class="card"><div class="h">Ближайшие платежи</div><div id="fPays"></div></div>
-  <div class="card"><div class="h">Клиенты: кто должен <span class="u" id="fOwedT"></span></div><div id="fOwed"></div></div>
+  <div class="card"><div class="h">Ожидаем денег <span class="u" id="fOwedT"></span></div><p class="lb" id="fOwedSub" style="margin:-2px 0 4px"></p><div id="fOwed"></div></div>
   <div style="margin-top:12px"><button class="btn" style="width:100%" onclick="tab='Расход';openSheet()">Записать расход</button></div>
+</main>
+<main id="study" style="display:none">
+  <div class="top"><div><p class="date">4 курс · Data Science</p><h1>Учёба</h1></div><button class="sync" onclick="load(true)">обновить</button></div>
+  <div class="card"><div class="h">Пары на неделю</div><div id="sClasses"></div></div>
+  <div class="card"><div class="h">Дедлайны и экзамены</div><div id="sItems"></div>
+    <div class="f" style="margin-top:8px"><input id="sNew" placeholder="Что сдать (лаба, квиз, экзамен)"><div class="add" style="margin:0"><input id="sDate" type="date"><button class="btn" onclick="addStudy()">+</button></div></div></div>
+  <div class="grid">
+    <div class="card"><p class="lb">IELTS за неделю</p><p class="vl" id="sIelts">–</p><div class="bar"><i id="sIeltsBar" style="width:0;background:var(--p)"></i></div>
+      <button class="btn ghost" style="width:100%;margin-top:10px;font-size:13px;padding:8px" onclick="post({a:'ielts'},'Занятие IELTS записано')">+ занятие</button></div>
+    <div class="card"><p class="lb">Прочитано книг</p><p class="vl" id="sBooksDone">–</p><p class="lb" style="margin-top:6px">цель: читать каждый день</p></div>
+  </div>
+  <div class="card" id="sBook"></div>
+  <div class="card"><div class="h">Хвосты</div><div id="sTails"></div></div>
 </main>
 <main id="soon" style="display:none"><div class="soon"><h1 id="soonT"></h1><p>Эта вкладка будет следующей.</p></div></main>
 
@@ -133,7 +146,7 @@ nav a.on{color:var(--g2)}
   <a href="#" data-t="content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Контент</a>
   <button class="plus" onclick="openSheet()" aria-label="Добавить">+</button>
   <a href="#" data-t="money2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Деньги</a>
-  <a href="#" data-t="Учёба"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Учёба</a>
+  <a href="#" data-t="study"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Учёба</a>
 </div></nav>
 
 <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sh">
@@ -239,7 +252,7 @@ function render(){
   $('rt').innerHTML=[1,2,3,4,5].map(n=>'<span class="'+(n===score?'s':'')+'" data-n="'+n+'">'+n+'</span>').join('');
   $('rt').querySelectorAll('span').forEach(el=>el.onclick=()=>{score=+el.dataset.n;$('rt').querySelectorAll('span').forEach(x=>x.classList.toggle('s',x===el));});
   if (rv && document.activeElement!==$('revNote')) $('revNote').value = rv.note||'';
-  renderContent(); renderMoney();
+  renderContent(); renderMoney(); renderStudy();
   $('revHint').textContent = rv ? 'сохранён' : (now.getHours()>=18 ? 'пора подвести' : 'вечером');
 }
 
@@ -278,9 +291,32 @@ function sendReel(){ const v=$('fR').value.trim()||'рилс'; done(post({a:'ree
 // вкладки
 document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();
   document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x===a));
-  const t=a.dataset.t; ['today','content','money2','soon'].forEach(id=>$(id).style.display='none');
-  if (t==='today'||t==='content'||t==='money2') $(t).style.display=''; else { $('soon').style.display=''; $('soonT').textContent=t; }
+  const t=a.dataset.t; ['today','content','money2','study','soon'].forEach(id=>$(id).style.display='none');
+  if (t==='today'||t==='content'||t==='money2'||t==='study') $(t).style.display=''; else { $('soon').style.display=''; $('soonT').textContent=t; }
   window.scrollTo(0,0);});
+
+// ---------- Учёба ----------
+const DOWS = ['вс','пн','вт','ср','чт','пт','сб'];
+function dlabel(k){ if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) return k||''; const d=new Date(k+'T12:00:00'); const diff=Math.round((d-new Date((data.today||'')+'T12:00:00'))/86400000);
+  return diff===0?'сегодня':diff===1?'завтра':diff<0?'просрочено':DOWS[d.getDay()]+', '+dd(k); }
+function renderStudy(){
+  const st=(data&&data.study&&!data.study.error)?data.study:{classes:[],items:[]};
+  const cl=st.classes||[]; let last='';
+  $('sClasses').innerHTML = cl.length ? cl.map(c=>{ const h=c.date!==last?'<p class="lb" style="margin:10px 0 2px;font-weight:600">'+dlabel(c.date)+'</p>':''; last=c.date;
+    return h+'<div class="rw" style="border:0;padding:4px 0"><span class="tm">'+(c.start||'')+'</span><span class="ev" style="border-color:var(--p)">'+esc(c.title)+'</span></div>'; }).join('') : '<div class="empty">На неделе пар в календаре нет</div>';
+  const items=(st.items||[]), dl=items.filter(x=>x.type!=='хвост'), tails=items.filter(x=>x.type==='хвост');
+  $('sItems').innerHTML = dl.length ? dl.map(x=>{ const near=/^\d{4}/.test(x.date)&&x.date<=(data.today||''); return '<div class="rw"><span>'+esc(x.what)+(x.note?'<br><span class="lb">'+esc(x.note)+'</span>':'')+'</span><span style="display:flex;gap:6px;align-items:center"><span class="pill '+(near?'r':x.type==='экзамен'?'p':'o')+'">'+esc(dlabel(x.date)||x.type)+'</span><span class="pill g" style="cursor:pointer" onclick="post({a:\'study_done\',row:'+x.row+'},\'Сдано ✓\')">✓</span></span></div>'; }).join('') : '<div class="empty">Дедлайнов нет</div>';
+  $('sTails').innerHTML = tails.length ? tails.map(x=>'<div class="rw"><span>'+esc(x.what.replace(/^Хвост:\s*/,''))+'</span><span class="pill b">'+esc(x.date)+'</span></div>').join('') : '<div class="empty">Хвостов нет 🎉</div>';
+  const g=st.ieltsGoal||5; $('sIelts').innerHTML=(st.ielts||0)+'<span class="u"> / '+g+'</span>'; $('sIeltsBar').style.width=pct(st.ielts||0,g);
+  $('sBooksDone').innerHTML=(st.booksDone||0)+'<span class="u"> за год</span>';
+  const b=st.book;
+  $('sBook').innerHTML = b ? '<div class="h">Читаю сейчас</div><p style="margin:0;font-size:15px">'+esc(b.title)+'</p><p class="lb">'+esc(b.author)+(b.page?' · стр. '+b.page+(b.total?' из '+b.total:''):'')+'</p>'
+    +(b.total?'<div class="bar"><i style="width:'+pct(b.page||0,b.total)+';background:var(--o)"></i></div>':'')
+    +'<div class="add"><input id="bPage" type="number" inputmode="numeric" placeholder="Я на странице…"><button class="btn" onclick="savePage('+b.row+')">OK</button></div>'
+    : '<div class="h">Читаю сейчас</div><div class="empty">Скажи Фрэнку, какую книгу читаешь</div>';
+}
+function addStudy(){ const v=$('sNew').value.trim(); if(!v){toast('Напиши, что сдать');return;} const d=$('sDate').value; $('sNew').value=''; post({a:'study_add',text:v,date:d,type:/экзам|финал|final|exam/i.test(v)?'экзамен':'дедлайн'},'Записал'); }
+function savePage(row){ const p=+$('bPage').value; if(!p){toast('Введи страницу');return;} post({a:'book_page',row,page:p},'Страница '+p+' ✓'); }
 
 // ---------- Деньги ----------
 const MONN = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
@@ -298,11 +334,13 @@ function renderMoney(){
   $('fPay').innerHTML = nf(f.payments)+'<span class="u"> ₸</span>';
   $('fPays').innerHTML = (m.payments||[]).length ? m.payments.map(p=>'<div class="rw"><span>'+esc(p.what)+' · '+(p.overdue?'просрочен':p.date===data.today?'сегодня':dd(p.date))+'</span><span class="pill '+(p.overdue||p.date===data.today?'r':'o')+'">−'+nf(p.amount)+' ₸</span></div>').join('') : '<div class="empty">На неделе платежей нет</div>';
   const ow = m.owed||[]; $('fOwedT').textContent = ow.length ? '+'+nf(m.owedTotal)+' ₸' : '';
+  const ye = (data.today||'').slice(0,4)+'-12-31', inY = ow.filter(o=>!o.date||o.date<=ye).reduce((a,o)=>a+(o.amount||0),0);
+  $('fOwedSub').textContent = ow.length ? 'до 31.12: +'+nf(inY)+' ₸'+(m.owedTotal-inY>0?' · позже: +'+nf(m.owedTotal-inY)+' ₸':'') : '';
   $('fOwed').innerHTML = ow.length ? ow.map(o=>'<div class="rw"><span>'+esc(o.who)+'<br><span class="lb">'+esc(o.what||'')+(o.date?' · '+(o.date<data.today?'просрочено, ':'')+dd(o.date):'')+'</span></span><span class="pill '+(o.date&&o.date<data.today?'r':'g')+'">+'+nf(o.amount)+' ₸</span></div>').join('') : '<div class="empty">Никто не должен</div>';
 }
 
 // ---------- Контент ----------
-const SHELF = {'идея':'o','идеи':'o','монтаж':'p','музыка':'b','клиентам':'g'};
+const SHELF = {'идея':'o','идеи':'o','монтаж':'p','музыка':'b','клиентам':'g','спросить':'r'};
 const NEXT = {'идея':'снять','снять':'монтаж','монтаж':'вышел'};
 const RST = {'идея':'o','снять':'b','монтаж':'p','вышел':'g'};
 let shelf = 'Все';
@@ -341,6 +379,7 @@ function demo(){ const t=new Date().toISOString().slice(0,10); return {today:t,
   tasks:[{row:2,text:'Скинуть превью клиенту',done:true},{row:3,text:'Смонтировать рилс',done:false},{row:4,text:'IELTS reading',done:false},{row:5,text:'Написать 10 агентствам',done:false,old:true}],
   money:{payments:[{date:t,what:'Обязательный платёж',amount:58000}],owed:[{who:'Клиент А',date:t,amount:200000},{who:'Клиент Б',date:t,amount:150000}],owedTotal:350000,spentToday:4200},
   content:{inbox:2,total:4,shelves:{'идея':1,'монтаж':1},items:[{row:5,date:t,url:'https://www.instagram.com/reel/demo1/',shelf:'',sum:'',todo:'',status:'новое'},{row:4,date:t,url:'https://vt.tiktok.com/demo/',shelf:'',sum:'',todo:'',status:'новое'},{row:3,date:t,url:'https://www.instagram.com/reel/demo2/',shelf:'идея',sum:'Формат «день из жизни» с цифрами на экране',todo:'снять в четверг',status:'разобрано'},{row:2,date:t,url:'https://www.instagram.com/reel/demo3/',shelf:'монтаж',sum:'Переход через вспышку + звук щелчка',todo:'попробовать в ролике клиента',status:'разобрано'}]},
+  study:{classes:[{date:t,start:'08:30',title:'Пара 1'},{date:t,start:'16:30',title:'Пара 2'}],items:[{row:2,date:'',what:'Финал по предмету',type:'экзамен',note:'декабрь'},{row:3,date:'весна 2027',what:'Хвост: предмет',type:'хвост'}],ielts:2,ieltsGoal:5,book:{row:2,title:'Книга',author:'Автор',page:80,total:250},booksDone:1},
   review:null}; }
 
 load();
