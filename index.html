@@ -251,11 +251,13 @@ function saveReview(){ if(!score){toast('Поставь оценку 1–5');ret
 const FORMS = {
   'Расход': ()=>'<input id="fSum" type="number" inputmode="numeric" placeholder="Сумма, ₸"><div class="chips" id="fCat">'+['еда','такси','кафе','продукты','подписки','другое'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><input id="fNote" placeholder="Заметка (можно пусто)"><button class="btn" onclick="sendExpense()">Записать расход</button>',
   'Еда': ()=>'<div class="add" style="margin:0"><input id="fP" type="number" inputmode="numeric" placeholder="Белок, г"><input id="fK" type="number" inputmode="numeric" placeholder="Ккал"></div><input id="fW" placeholder="Что ел"><button class="btn" onclick="sendFood()">Записать еду</button>',
-  'Зал': ()=>'<div class="chips" id="fGym">'+['Push','Pull','Upper','Ноги','Кардио'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendGym()">Отметить зал</button>',
+  'Зал': ()=>{ const n=nextGym(); return '<p class="lb" style="margin:0">По плану Push → Pull → Upper, это '+(gymCount()+1)+'-я тренировка недели</p><div class="chips" id="fGym">'+['Push','Pull','Upper'].map(c=>'<span'+(c===n?' class="s"':'')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendGym()">Отметить: '+n+'</button>'; },
   'Дело': ()=>'<input id="fT" placeholder="Что сделать"><button class="btn" onclick="sendTask()">Добавить дело</button>',
   'Рилс': ()=>'<input id="fR" placeholder="Название рилса"><div class="chips" id="fRS">'+['вышел','монтаж','снять','идея'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendReel()">Записать рилс</button>'
 };
 let tab='Расход';
+const gymCount = () => (data&&data.health&&data.health.gym&&data.health.gym.count)||0;
+const nextGym = () => ['Push','Pull','Upper'][Math.min(gymCount(),2)];
 function openSheet(){ $('sheet').classList.add('open'); drawSheet(); }
 function closeSheet(){ $('sheet').classList.remove('open'); }
 function drawSheet(){
