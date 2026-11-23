@@ -177,7 +177,7 @@ function render(){
   $('sleepSub').textContent = sl&&sl.today ? 'лёг '+sl.bed+' · встал '+sl.wake : 'не записан';
   // календарь
   const cal = Array.isArray(d.cal)?d.cal:[];
-  $('cal').innerHTML = cal.length ? cal.map(e=>'<div class="rw"><span class="tm">'+(e.allDay?'весь':e.start)+'</span><span class="ev">'+esc(e.title)+'</span></div>').join('') : '<div class="empty">Событий нет</div>';
+  $('cal').innerHTML = d.cal && d.cal.error ? '<div class="empty">Календарь не подключён: нет разрешения</div>' : cal.length ? cal.map(e=>'<div class="rw"><span class="tm">'+(e.allDay?'весь':e.start)+'</span><span class="ev">'+esc(e.title)+'</span></div>').join('') : '<div class="empty">Событий нет</div>';
   // дела
   const t = Array.isArray(d.tasks)?d.tasks:[];
   $('tcount').textContent = t.length ? t.filter(x=>x.done).length+' / '+t.length : '';
