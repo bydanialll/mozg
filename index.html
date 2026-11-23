@@ -50,8 +50,8 @@ h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.5px}
 .add{display:flex;gap:8px;margin-top:8px}
 input,select,textarea{font:inherit;color:var(--tx);background:var(--bg);border:.5px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none}
 textarea{resize:none;height:64px}
-button.btn{font:inherit;font-weight:600;border:0;border-radius:12px;padding:10px 14px;background:var(--g);color:#fff;white-space:nowrap}
-button.ghost{background:var(--bg);color:var(--tx);border:.5px solid var(--line)}
+.btn{font:inherit;font-weight:600;border:0;border-radius:12px;padding:10px 14px;background:var(--g);color:#fff;white-space:nowrap}
+.ghost{background:var(--bg);color:var(--tx);border:.5px solid var(--line)}
 .rt{display:flex;gap:6px;margin:6px 0 8px}
 .rt span{flex:1;text-align:center;padding:9px 0;border-radius:10px;border:.5px solid var(--line);background:var(--bg);font-weight:600}
 .rt span.s{background:var(--gbg);border-color:var(--g);color:var(--gtx)}
@@ -102,11 +102,20 @@ nav a.on{color:var(--g2)}
     <textarea id="revNote" placeholder="Что получилось? Что завтра?"></textarea>
     <div style="margin-top:8px"><button class="btn" onclick="saveReview()">Сохранить итог</button></div></div>
 </main>
+<main id="content" style="display:none">
+  <div class="top"><div><p class="date">сохранённое и идеи</p><h1>Контент</h1></div><button class="sync" onclick="load(true)">обновить</button></div>
+  <div class="card" id="inboxCard" style="background:var(--obg);border-color:transparent"></div>
+  <div class="seg" id="shelfSeg" style="margin-top:12px"></div>
+  <div id="items"></div>
+  <div class="card"><div class="h">Конвейер рилсов <span class="u" id="pipeHint">тап по статусу →</span></div>
+    <div id="pipe"></div>
+    <div class="add"><input id="newIdea" placeholder="Идея для рилса" enterkeyhint="done"><button class="btn" onclick="addIdea()">+</button></div></div>
+</main>
 <main id="soon" style="display:none"><div class="soon"><h1 id="soonT"></h1><p>Эта вкладка будет следующей.</p></div></main>
 
 <nav><div class="in">
   <a href="#" class="on" data-t="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Сегодня</a>
-  <a href="#" data-t="Контент"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Контент</a>
+  <a href="#" data-t="content"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Контент</a>
   <button class="plus" onclick="openSheet()" aria-label="Добавить">+</button>
   <a href="#" data-t="Клиенты"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Клиенты</a>
   <a href="#" data-t="Учёба"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Учёба</a>
@@ -215,6 +224,7 @@ function render(){
   $('rt').innerHTML=[1,2,3,4,5].map(n=>'<span class="'+(n===score?'s':'')+'" data-n="'+n+'">'+n+'</span>').join('');
   $('rt').querySelectorAll('span').forEach(el=>el.onclick=()=>{score=+el.dataset.n;$('rt').querySelectorAll('span').forEach(x=>x.classList.toggle('s',x===el));});
   if (rv && document.activeElement!==$('revNote')) $('revNote').value = rv.note||'';
+  renderContent();
   $('revHint').textContent = rv ? 'сохранён' : (now.getHours()>=18 ? 'пора подвести' : 'вечером');
 }
 
@@ -251,14 +261,49 @@ function sendReel(){ const v=$('fR').value.trim()||'рилс'; done(post({a:'ree
 // вкладки
 document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();
   document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x===a));
-  const t=a.dataset.t; $('today').style.display=t==='today'?'':'none'; $('soon').style.display=t==='today'?'none':''; $('soonT').textContent=t; window.scrollTo(0,0);});
+  const t=a.dataset.t; ['today','content','soon'].forEach(id=>$(id).style.display='none');
+  if (t==='today'||t==='content') $(t).style.display=''; else { $('soon').style.display=''; $('soonT').textContent=t; }
+  window.scrollTo(0,0);});
+
+// ---------- Контент ----------
+const SHELF = {'идея':'o','идеи':'o','монтаж':'p','музыка':'b','клиентам':'g'};
+const NEXT = {'идея':'снять','снять':'монтаж','монтаж':'вышел'};
+const RST = {'идея':'o','снять':'b','монтаж':'p','вышел':'g'};
+let shelf = 'Все';
+function host(u){ try{ return new URL(u).hostname.replace('www.',''); }catch(e){ return ''; } }
+function renderContent(){
+  const c = (data&&data.content&&!data.content.error)?data.content:{items:[],inbox:0,shelves:{}};
+  $('inboxCard').innerHTML = '<div class="h" style="color:var(--otx);margin:0">Входящие · '+c.inbox+' новых</div><p class="lb" style="color:var(--otx);margin-top:4px">'+(c.inbox?'Сохранил через «В мозг» — разберу и разложу по полкам':'Всё разобрано. Сохраняй через «В мозг» в меню «Поделиться»')+'</p>';
+  const tabs = ['Все','Новое'].concat(Object.keys(c.shelves||{}));
+  $('shelfSeg').innerHTML = tabs.map(t=>'<span class="'+(t===shelf?'s':'')+'">'+esc(t)+(c.shelves&&c.shelves[t]?' '+c.shelves[t]:'')+'</span>').join('');
+  $('shelfSeg').querySelectorAll('span').forEach((el,i)=>el.onclick=()=>{shelf=tabs[i];renderContent();});
+  let it = (c.items||[]).filter(x=>shelf==='Все'||(shelf==='Новое'?x.status==='новое':x.shelf===shelf));
+  $('items').innerHTML = it.length ? it.map(x=>{
+    const isUrl=/^https?:/.test(x.url), done=x.status==='сделано';
+    return '<div class="card"'+(done?' style="opacity:.55"':'')+'><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+      +'<span class="pill '+(SHELF[x.shelf]||(x.status==='новое'?'r':'b'))+'">'+esc(x.shelf||'новое')+'</span><span class="lb">'+(x.date?dd(x.date):'')+'</span></div>'
+      +'<p style="margin:8px 0 2px;font-size:14px">'+esc(x.sum|| (isUrl?host(x.url):x.url))+'</p>'
+      +(x.todo?'<p class="lb">→ '+esc(x.todo)+'</p>':'')
+      +'<div style="display:flex;gap:8px;margin-top:8px">'+(isUrl?'<a class="btn ghost" style="text-decoration:none;font-size:13px;padding:7px 12px;border-radius:10px" href="'+esc(x.url)+'" target="_blank" rel="noopener">Открыть</a>':'')
+      +(done?'':'<button class="btn ghost" style="font-size:13px;padding:7px 12px;border-radius:10px" onclick="cStatus('+x.row+',\'сделано\')">Сделано ✓</button>')
+      +'<button class="btn ghost" style="font-size:13px;padding:7px 12px;border-radius:10px;margin-left:auto" onclick="cStatus('+x.row+',\'архив\')">В архив</button></div></div>';
+  }).join('') : '<div class="card"><div class="empty">Здесь пока пусто</div></div>';
+  const rl = (data&&data.reels&&!data.reels.error)?data.reels:{pipeline:[]};
+  $('pipe').innerHTML = (rl.pipeline||[]).length ? rl.pipeline.map(r=>'<div class="rw"><span>'+esc(r.title)+'</span><span class="pill '+(RST[r.status]||'b')+'" style="cursor:pointer" onclick="rStatus('+r.row+',\''+esc(r.status)+'\')">'+esc(r.status)+' →</span></div>').join('')
+    + ((rl.recent||[]).length?'<p class="lb" style="margin-top:8px">Недавно вышли: '+rl.recent.map(r=>esc(r.title)).join(', ')+'</p>':'') : '<div class="empty">Идей пока нет — добавь первую</div>';
+}
+function cStatus(row,st){ post({a:'content_status',row,status:st}, st==='архив'?'В архиве':'Отмечено ✓'); }
+function rStatus(row,st){ const n=NEXT[st]||'вышел'; post({a:'reel_status',row,status:n}, n==='вышел'?'Рилс вышел 🎬':'Теперь: '+n); }
+function addIdea(){ const v=$('newIdea').value.trim(); if(!v)return; $('newIdea').value=''; post({a:'idea',title:v},'Идея записана'); }
+$('newIdea').addEventListener('keydown',e=>{if(e.key==='Enter')addIdea();});
 
 function demo(){ const t=new Date().toISOString().slice(0,10); return {today:t,
   health:{sleep:{last:{today:true,hours:6.5,bed:'01:30',wake:'08:00'}},gym:{count:1,goal:3,today:false},food:{today:{protein:92},goalProtein:140}},
-  streaks:{gymWeeks:4,proteinDays:5}, reels:{week:1,goal:3,streakWeeks:2},
+  streaks:{gymWeeks:4,proteinDays:5}, reels:{week:1,goal:3,streakWeeks:2,pipeline:[{row:2,title:'Влог: неделя видеографа',status:'монтаж'},{row:3,title:'Разговорный: про утро',status:'снять'},{row:4,title:'Дисциплина в 20 лет',status:'идея'}],recent:[{title:'Влог: последний выезд'}]},
   cal:[{start:'10:00',title:'Пара'},{start:'15:00',title:'Съёмка'},{start:'19:00',title:'Зал'}],
   tasks:[{row:2,text:'Скинуть превью клиенту',done:true},{row:3,text:'Смонтировать рилс',done:false},{row:4,text:'IELTS reading',done:false},{row:5,text:'Написать 10 агентствам',done:false,old:true}],
   money:{payments:[{date:t,what:'Обязательный платёж',amount:58000}],owed:[{who:'Клиент А',date:t,amount:200000},{who:'Клиент Б',date:t,amount:150000}],owedTotal:350000,spentToday:4200},
+  content:{inbox:2,total:4,shelves:{'идея':1,'монтаж':1},items:[{row:5,date:t,url:'https://www.instagram.com/reel/demo1/',shelf:'',sum:'',todo:'',status:'новое'},{row:4,date:t,url:'https://vt.tiktok.com/demo/',shelf:'',sum:'',todo:'',status:'новое'},{row:3,date:t,url:'https://www.instagram.com/reel/demo2/',shelf:'идея',sum:'Формат «день из жизни» с цифрами на экране',todo:'снять в четверг',status:'разобрано'},{row:2,date:t,url:'https://www.instagram.com/reel/demo3/',shelf:'монтаж',sum:'Переход через вспышку + звук щелчка',todo:'попробовать в ролике клиента',status:'разобрано'}]},
   review:null}; }
 
 load();
