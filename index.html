@@ -135,6 +135,22 @@ let data = null, score = null;
 
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1800);}
 
+// JSONP: Safari на iPhone блокирует fetch к Google (редирект), а <script> проходит
+let _cb = 0;
+function jsonp(params, ms){
+  return new Promise((res, rej)=>{
+    const name = '__mz' + (++_cb) + Date.now();
+    const s = document.createElement('script');
+    const tm = setTimeout(()=>{ clean(); rej('сервер не ответил за '+Math.round((ms||40000)/1000)+' секунд'); }, ms||40000);
+    function clean(){ clearTimeout(tm); delete window[name]; s.remove(); }
+    window[name] = d => { clean(); res(d); };
+    s.onerror = () => { clean(); rej('нет связи с сервером'); };
+    const q = new URLSearchParams(Object.assign({key:KEY, cb:name, t:Date.now()}, params));
+    s.src = API + '?' + q.toString();
+    document.head.appendChild(s);
+  });
+}
+
 function status(t, kind){ $('demo').innerHTML = t ? '<div class="demo" style="'+(kind==='info'?'background:var(--bbg);color:var(--btx)':'')+'">'+t+'</div>' : ''; }
 async function load(manual){
   if (DEMO){ data = demo(); render(); status('Нет ключа: это демо-данные. Открой личную ссылку «Открыть Мозг» из Telegram в Safari и заново добавь на экран Домой (старую иконку удали).'); return; }
@@ -142,16 +158,13 @@ async function load(manual){
   $('sync').textContent='обновляю…';
   if (!data){ $('date').textContent=DOW[new Date().getDay()]+', '+new Date().getDate()+' '+MON[new Date().getMonth()]; status('Загружаю данные из таблиц… первый раз до 15 секунд', 'info'); }
   try{
-    const ctl = new AbortController(); const tm = setTimeout(()=>ctl.abort(), 40000);
-    const r = await fetch(API+'?w=app&key='+encodeURIComponent(KEY), {signal: ctl.signal}); clearTimeout(tm);
-    const txt = await r.text(); let j;
-    try { j = JSON.parse(txt); } catch(e){ throw 'сервер ответил не данными (HTTP '+r.status+')'; }
+    const j = await jsonp({w:'app'}, 40000);
     if (j.error) throw j.error;
     data=j; LS.set('cache',JSON.stringify(j)); render(); status(''); $('sync').textContent='обновить';
     if (manual) toast('Обновлено');
   }catch(e){
     $('sync').textContent='нет связи';
-    const msg = e && e.name==='AbortError' ? 'сервер не ответил за 40 секунд' : (e && e.message) || String(e);
+    const msg = (e && e.message) || String(e);
     status('Не получилось загрузить: '+esc(msg)+(data?' · показываю прошлые данные':''));
   }
 }
@@ -159,8 +172,7 @@ async function load(manual){
 async function post(body, ok){
   if (DEMO){ toast('Демо: '+ok); return true; }
   try{
-    const r = await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({key:KEY},body))});
-    const j = await r.json(); if (j.error) throw j.error;
+    const j = await jsonp({w:'do', d:JSON.stringify(body)}, 30000); if (j.error) throw j.error;
     toast(ok); load(); return true;
   }catch(e){ toast('Ошибка: '+e); return false; }
 }
