@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Мозг">
+<meta name="theme-color" content="#f4f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Мозг</title>
+<style>
+:root{--bg:#f4f4f1;--card:#ffffff;--line:rgba(0,0,0,.08);--tx:#1c1c1a;--tx2:#6b6a65;--tx3:#a3a29b;
+--g:#639922;--g2:#3b6d11;--gbg:#eaf3de;--gtx:#27500a;--o:#d85a30;--obg:#faece7;--otx:#712b13;
+--b:#378add;--bbg:#e6f1fb;--btx:#0c447c;--r:#e24b4a;--rbg:#fcebeb;--rtx:#791f1f;--p:#7f77dd;--pbg:#eeedfe;--ptx:#3c3489;--track:#ecebe6}
+@media (prefers-color-scheme:dark){:root{--bg:#111110;--card:#1d1d1b;--line:rgba(255,255,255,.08);--tx:#f1efe8;--tx2:#a3a29b;--tx3:#6b6a65;
+--gbg:#1f2b12;--gtx:#c0dd97;--obg:#3a1d12;--otx:#f5c4b3;--bbg:#0f2234;--btx:#b5d4f4;--rbg:#3a1414;--rtx:#f7c1c1;--pbg:#24204a;--ptx:#cecbf6;--track:#2c2c2a}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+main{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+.date{color:var(--tx2);font-size:13px;margin:0}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.5px}
+.sync{font-size:12px;color:var(--tx3);border:0;background:none;padding:6px 0}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.pill{font-size:12px;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.g{background:var(--gbg);color:var(--gtx)}.o{background:var(--obg);color:var(--otx)}.b{background:var(--bbg);color:var(--btx)}.r{background:var(--rbg);color:var(--rtx)}.p{background:var(--pbg);color:var(--ptx)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.card{background:var(--card);border:.5px solid var(--line);border-radius:18px;padding:12px 14px;margin-top:10px}
+.grid .card{margin-top:0}
+.lb{font-size:12px;color:var(--tx2);margin:0}
+.vl{font-size:22px;font-weight:600;margin:2px 0 0;letter-spacing:-.3px}
+.u{font-size:13px;font-weight:400;color:var(--tx2)}
+.bar{height:6px;border-radius:3px;background:var(--track);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--g);transition:width .4s}
+.h{font-size:15px;font-weight:600;margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline}
+.rw{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid var(--line);font-size:14px}
+.rw:first-of-type{border-top:0}
+.tm{color:var(--tx2);font-variant-numeric:tabular-nums;width:44px;flex:none}
+.ev{flex:1;border-left:2px solid var(--b);padding-left:8px}
+.tk{cursor:pointer;justify-content:flex-start}
+.bx{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--tx3);flex:none;display:flex;align-items:center;justify-content:center;color:var(--gtx);font-size:14px}
+.tk.on .bx{background:var(--gbg);border-color:var(--g)}
+.tk.on .bx:after{content:"✓"}
+.tk.on span{color:var(--tx3);text-decoration:line-through}
+.tk .old{font-size:11px;color:var(--otx);margin-left:auto}
+.add{display:flex;gap:8px;margin-top:8px}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--bg);border:.5px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none}
+textarea{resize:none;height:64px}
+button.btn{font:inherit;font-weight:600;border:0;border-radius:12px;padding:10px 14px;background:var(--g);color:#fff;white-space:nowrap}
+button.ghost{background:var(--bg);color:var(--tx);border:.5px solid var(--line)}
+.rt{display:flex;gap:6px;margin:6px 0 8px}
+.rt span{flex:1;text-align:center;padding:9px 0;border-radius:10px;border:.5px solid var(--line);background:var(--bg);font-weight:600}
+.rt span.s{background:var(--gbg);border-color:var(--g);color:var(--gtx)}
+.empty{color:var(--tx3);font-size:13px;padding:4px 0}
+nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:.5px solid var(--line);padding:8px 0 calc(env(safe-area-inset-bottom) + 6px)}
+nav .in{max-width:520px;margin:0 auto;display:flex;justify-content:space-around;align-items:center}
+nav a{font-size:10px;color:var(--tx2);text-align:center;text-decoration:none;width:60px}
+nav a svg{width:23px;height:23px;display:block;margin:0 auto 2px}
+nav a.on{color:var(--g2)}
+@media (prefers-color-scheme:dark){nav a.on{color:#97c459}}
+.plus{width:50px;height:50px;border-radius:50%;background:var(--g);color:#fff;border:0;font-size:30px;line-height:1;display:flex;align-items:center;justify-content:center;margin-top:-18px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.sheet.open{display:flex}
+.sh{background:var(--card);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+.seg{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.seg span{padding:7px 12px;border-radius:20px;background:var(--bg);font-size:14px;white-space:nowrap;border:.5px solid var(--line)}
+.seg span.s{background:var(--g);color:#fff;border-color:var(--g)}
+.f{display:grid;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips span{font-size:13px;padding:6px 10px;border-radius:16px;background:var(--bg);border:.5px solid var(--line)}
+.chips span.s{background:var(--gbg);border-color:var(--g);color:var(--gtx)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 10px);transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;z-index:10;pointer-events:none}
+.toast.on{opacity:1}
+.soon{text-align:center;color:var(--tx2);padding:60px 20px}
+.demo{font-size:12px;color:var(--otx);background:var(--obg);border-radius:10px;padding:6px 10px;margin-top:8px}
+</style>
+</head>
+<body>
+<main id="today">
+  <div class="top">
+    <div><p class="date" id="date">&nbsp;</p><h1>Сегодня</h1></div>
+    <button class="sync" id="sync" onclick="load(true)">обновить</button>
+  </div>
+  <div id="demo"></div>
+  <div class="pills" id="streaks"></div>
+  <div class="grid">
+    <div class="card"><p class="lb">Рилсы за неделю</p><p class="vl" id="reels">–</p><div class="bar"><i id="reelsBar" style="width:0;background:var(--o)"></i></div></div>
+    <div class="card"><p class="lb">Белок</p><p class="vl" id="prot">–</p><div class="bar"><i id="protBar" style="width:0"></i></div></div>
+    <div class="card"><p class="lb">Зал за неделю</p><p class="vl" id="gym">–</p><div class="bar"><i id="gymBar" style="width:0"></i></div></div>
+    <div class="card"><p class="lb">Сон</p><p class="vl" id="sleep">–</p><p class="lb" id="sleepSub" style="margin-top:6px">&nbsp;</p></div>
+  </div>
+  <div class="card"><div class="h">Календарь</div><div id="cal"></div></div>
+  <div class="card"><div class="h">Дела <span class="u" id="tcount"></span></div><div id="tasks"></div>
+    <div class="add"><input id="newTask" placeholder="Новое дело" enterkeyhint="done"><button class="btn" onclick="addTask()">+</button></div></div>
+  <div class="card"><div class="h">Деньги <span class="u" id="spent"></span></div><div id="money"></div></div>
+  <div class="card" id="reviewCard"><div class="h">Итог дня <span class="u" id="revHint"></span></div>
+    <div class="rt" id="rt"></div>
+    <textarea id="revNote" placeholder="Что получилось? Что завтра?"></textarea>
+    <div style="margin-top:8px"><button class="btn" onclick="saveReview()">Сохранить итог</button></div></div>
+</main>
+<main id="soon" style="display:none"><div class="soon"><h1 id="soonT"></h1><p>Эта вкладка будет следующей.</p></div></main>
+
+<nav><div class="in">
+  <a href="#" class="on" data-t="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Сегодня</a>
+  <a href="#" data-t="Контент"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Контент</a>
+  <button class="plus" onclick="openSheet()" aria-label="Добавить">+</button>
+  <a href="#" data-t="Клиенты"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Клиенты</a>
+  <a href="#" data-t="Учёба"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Учёба</a>
+</div></nav>
+
+<div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sh">
+  <div class="seg" id="seg"></div>
+  <div class="f" id="form"></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LS = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
+// настройка: открыть один раз index.html#u=<ссылка /exec>&k=<ключ>
+(function(){const h=new URLSearchParams(location.hash.slice(1));if(h.get('u')&&h.get('k')){LS.set('api',h.get('u'));LS.set('key',h.get('k'));history.replaceState(null,'',location.pathname);}})();
+const API = LS.get('api'), KEY = LS.get('key'), DEMO = !API || !KEY;
+const nf = n => n==null ? '–' : Math.round(n).toLocaleString('ru-RU').replace(/,/g,' ');
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = (a,b) => Math.max(0,Math.min(100, b ? a/b*100 : 0)) + '%';
+const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DOW = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+const dd = k => { const [y,m,d]=k.split('-'); return +d+' '+MON[m-1].slice(0,3); };
+let data = null, score = null;
+
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1800);}
+
+async function load(manual){
+  if (DEMO){ data = demo(); render(); return; }
+  const c = LS.get('cache'); if (c && !data){ try{ data=JSON.parse(c); render(); }catch(e){} }
+  $('sync').textContent='обновляю…';
+  try{
+    const r = await fetch(API+'?w=app&key='+encodeURIComponent(KEY));
+    const j = await r.json(); if (j.error) throw j.error;
+    data=j; LS.set('cache',JSON.stringify(j)); render(); $('sync').textContent='обновить';
+    if (manual) toast('Обновлено');
+  }catch(e){ $('sync').textContent='нет связи'; if(!data) $('tasks').innerHTML='<div class="empty">Не получилось загрузить: '+esc(e)+'</div>'; }
+}
+
+async function post(body, ok){
+  if (DEMO){ toast('Демо: '+ok); return true; }
+  try{
+    const r = await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({key:KEY},body))});
+    const j = await r.json(); if (j.error) throw j.error;
+    toast(ok); load(); return true;
+  }catch(e){ toast('Ошибка: '+e); return false; }
+}
+
+function render(){
+  const d = data, now = new Date();
+  $('date').textContent = DOW[now.getDay()]+', '+now.getDate()+' '+MON[now.getMonth()];
+  $('demo').innerHTML = DEMO ? '<div class="demo">Демо-данные. Настоящие появятся после подключения.</div>' : '';
+  const h = d.health||{}, s = d.streaks||{}, rl = d.reels||{};
+  // стрики
+  const pills = [];
+  if (s.gymWeeks) pills.push(['g','зал '+s.gymWeeks+' нед. подряд']);
+  if (rl.streakWeeks) pills.push(['o','рилсы '+rl.streakWeeks+' нед. подряд']);
+  if (s.proteinDays) pills.push(['b','белок '+s.proteinDays+' дн. подряд']);
+  $('streaks').innerHTML = pills.map(p=>'<span class="pill '+p[0]+'">🔥 '+p[1]+'</span>').join('');
+  // карточки
+  $('reels').innerHTML = (rl.week??0)+'<span class="u"> / '+(rl.goal||3)+'</span>'; $('reelsBar').style.width=pct(rl.week,rl.goal||3);
+  const f = h.food||{}, pt = (f.today&&f.today.protein)||0;
+  $('prot').innerHTML = nf(pt)+'<span class="u"> / '+(f.goalProtein||140)+' г</span>'; $('protBar').style.width=pct(pt,f.goalProtein||140);
+  const g = h.gym||{}; $('gym').innerHTML=(g.count??0)+'<span class="u"> / '+(g.goal||3)+(g.today?' · сегодня ✓':'')+'</span>'; $('gymBar').style.width=pct(g.count,g.goal||3);
+  const sl = h.sleep&&h.sleep.last;
+  $('sleep').innerHTML = sl&&sl.today ? String(sl.hours).replace('.',',')+'<span class="u"> ч</span>' : '–';
+  $('sleepSub').textContent = sl&&sl.today ? 'лёг '+sl.bed+' · встал '+sl.wake : 'не записан';
+  // календарь
+  const cal = Array.isArray(d.cal)?d.cal:[];
+  $('cal').innerHTML = cal.length ? cal.map(e=>'<div class="rw"><span class="tm">'+(e.allDay?'весь':e.start)+'</span><span class="ev">'+esc(e.title)+'</span></div>').join('') : '<div class="empty">Событий нет</div>';
+  // дела
+  const t = Array.isArray(d.tasks)?d.tasks:[];
+  $('tcount').textContent = t.length ? t.filter(x=>x.done).length+' / '+t.length : '';
+  $('tasks').innerHTML = t.length ? t.map(x=>'<div class="rw tk'+(x.done?' on':'')+'" data-row="'+x.row+'"><div class="bx"></div><span>'+esc(x.text)+'</span>'+(x.old?'<span class="old">хвост</span>':'')+'</div>').join('') : '<div class="empty">Дел на сегодня нет</div>';
+  document.querySelectorAll('.tk').forEach(el=>el.onclick=()=>{el.classList.toggle('on');post({a:'task_toggle',row:el.dataset.row}, el.classList.contains('on')?'Сделано ✓':'Вернул');});
+  // деньги
+  const m = d.money||{}, rows=[];
+  (m.payments||[]).forEach(p=>rows.push('<div class="rw"><span>'+esc(p.what)+' · '+(p.overdue?'просрочен':p.date===d.today?'сегодня':dd(p.date))+'</span><span class="pill '+(p.overdue||p.date===d.today?'r':'o')+'">−'+nf(p.amount)+' ₸</span></div>'));
+  (m.owed||[]).slice(0,3).forEach(o=>rows.push('<div class="rw"><span>'+esc(o.who)+' · '+(o.date?dd(o.date):'')+'</span><span class="pill g">+'+nf(o.amount)+' ₸</span></div>'));
+  if (m.owed&&m.owed.length>3) rows.push('<div class="rw"><span class="lb">Всего должны мне</span><span class="pill g">+'+nf(m.owedTotal)+' ₸</span></div>');
+  $('money').innerHTML = rows.join('') || '<div class="empty">Платежей на неделе нет</div>';
+  $('spent').textContent = 'сегодня −'+nf(m.spentToday||0)+' ₸';
+  // итог
+  const rv = d.review; score = rv?rv.score:score;
+  $('rt').innerHTML=[1,2,3,4,5].map(n=>'<span class="'+(n===score?'s':'')+'" data-n="'+n+'">'+n+'</span>').join('');
+  $('rt').querySelectorAll('span').forEach(el=>el.onclick=()=>{score=+el.dataset.n;$('rt').querySelectorAll('span').forEach(x=>x.classList.toggle('s',x===el));});
+  if (rv && document.activeElement!==$('revNote')) $('revNote').value = rv.note||'';
+  $('revHint').textContent = rv ? 'сохранён' : (now.getHours()>=18 ? 'пора подвести' : 'вечером');
+}
+
+function addTask(){ const v=$('newTask').value.trim(); if(!v)return; $('newTask').value=''; post({a:'task_add',text:v},'Дело добавлено'); }
+$('newTask').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+function saveReview(){ if(!score){toast('Поставь оценку 1–5');return;} post({a:'review',score,note:$('revNote').value.trim()},'Итог сохранён'); }
+
+// быстрое добавление
+const FORMS = {
+  'Расход': ()=>'<input id="fSum" type="number" inputmode="numeric" placeholder="Сумма, ₸"><div class="chips" id="fCat">'+['еда','такси','кафе','продукты','подписки','другое'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><input id="fNote" placeholder="Заметка (можно пусто)"><button class="btn" onclick="sendExpense()">Записать расход</button>',
+  'Еда': ()=>'<div class="add" style="margin:0"><input id="fP" type="number" inputmode="numeric" placeholder="Белок, г"><input id="fK" type="number" inputmode="numeric" placeholder="Ккал"></div><input id="fW" placeholder="Что ел"><button class="btn" onclick="sendFood()">Записать еду</button>',
+  'Зал': ()=>'<div class="chips" id="fGym">'+['Push','Pull','Upper','Ноги','Кардио'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendGym()">Отметить зал</button>',
+  'Дело': ()=>'<input id="fT" placeholder="Что сделать"><button class="btn" onclick="sendTask()">Добавить дело</button>',
+  'Рилс': ()=>'<input id="fR" placeholder="Название рилса"><div class="chips" id="fRS">'+['вышел','монтаж','снять','идея'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendReel()">Записать рилс</button>'
+};
+let tab='Расход';
+function openSheet(){ $('sheet').classList.add('open'); drawSheet(); }
+function closeSheet(){ $('sheet').classList.remove('open'); }
+function drawSheet(){
+  $('seg').innerHTML=Object.keys(FORMS).map(k=>'<span class="'+(k===tab?'s':'')+'">'+k+'</span>').join('');
+  $('seg').querySelectorAll('span').forEach(el=>el.onclick=()=>{tab=el.textContent;drawSheet();});
+  $('form').innerHTML=FORMS[tab]();
+  $('form').querySelectorAll('.chips').forEach(c=>c.querySelectorAll('span').forEach(el=>el.onclick=()=>{c.querySelectorAll('span').forEach(x=>x.classList.remove('s'));el.classList.add('s');}));
+  const first=$('form').querySelector('input'); if(first) setTimeout(()=>first.focus(),50);
+}
+const chip = id => { const s=$(id).querySelector('.s'); return s?s.textContent:''; };
+async function done(p){ if(await p) closeSheet(); }
+function sendExpense(){ const s=+$('fSum').value; if(!s){toast('Введи сумму');return;} done(post({a:'expense',sum:s,cat:chip('fCat'),note:$('fNote').value.trim()},'Расход записан')); }
+function sendFood(){ const p=+$('fP').value||0,k=+$('fK').value||0; if(!p&&!k){toast('Введи белок или ккал');return;} done(post({a:'food',protein:p,kcal:k,what:$('fW').value.trim()},'Еда записана')); }
+function sendGym(){ done(post({a:'gym',what:chip('fGym')},'Зал отмечен 💪')); }
+function sendTask(){ const v=$('fT').value.trim(); if(!v){toast('Напиши дело');return;} done(post({a:'task_add',text:v},'Дело добавлено')); }
+function sendReel(){ const v=$('fR').value.trim()||'рилс'; done(post({a:'reel',title:v,status:chip('fRS')},'Рилс записан 🎬')); }
+
+// вкладки
+document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();
+  document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x===a));
+  const t=a.dataset.t; $('today').style.display=t==='today'?'':'none'; $('soon').style.display=t==='today'?'none':''; $('soonT').textContent=t; window.scrollTo(0,0);});
+
+function demo(){ const t=new Date().toISOString().slice(0,10); return {today:t,
+  health:{sleep:{last:{today:true,hours:6.5,bed:'01:30',wake:'08:00'}},gym:{count:1,goal:3,today:false},food:{today:{protein:92},goalProtein:140}},
+  streaks:{gymWeeks:4,proteinDays:5}, reels:{week:1,goal:3,streakWeeks:2},
+  cal:[{start:'10:00',title:'Пара'},{start:'15:00',title:'Съёмка'},{start:'19:00',title:'Зал'}],
+  tasks:[{row:2,text:'Скинуть превью клиенту',done:true},{row:3,text:'Смонтировать рилс',done:false},{row:4,text:'IELTS reading',done:false},{row:5,text:'Написать 10 агентствам',done:false,old:true}],
+  money:{payments:[{date:t,what:'Обязательный платёж',amount:58000}],owed:[{who:'Клиент А',date:t,amount:200000},{who:'Клиент Б',date:t,amount:150000}],owedTotal:350000,spentToday:4200},
+  review:null}; }
+
+load();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') load(); });
+</script>
+</body>
+</html>
