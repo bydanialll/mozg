@@ -58,7 +58,7 @@ textarea{resize:none;height:64px}
 .empty{color:var(--tx3);font-size:13px;padding:4px 0}
 nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:.5px solid var(--line);padding:8px 0 calc(env(safe-area-inset-bottom) + 6px)}
 nav .in{max-width:520px;margin:0 auto;display:flex;justify-content:space-around;align-items:center}
-nav a{font-size:10px;color:var(--tx2);text-align:center;text-decoration:none;width:60px}
+nav a{font-size:10px;color:var(--tx2);text-align:center;text-decoration:none;width:56px}
 nav a svg{width:23px;height:23px;display:block;margin:0 auto 2px}
 nav a.on{color:var(--g2)}
 @media (prefers-color-scheme:dark){nav a.on{color:#97c459}}
@@ -76,6 +76,19 @@ nav a.on{color:var(--g2)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 10px);transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;z-index:10;pointer-events:none}
 .toast.on{opacity:1}
 .soon{text-align:center;color:var(--tx2);padding:60px 20px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:90px;position:relative;margin:12px 0 4px}
+.chart .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.chart .c i{display:block;border-radius:4px 4px 2px 2px;background:var(--g);min-height:3px}
+.chart .c.no i{background:var(--track)}
+.chart .gl{position:absolute;left:0;right:0;border-top:1px dashed var(--tx3);pointer-events:none}
+.chart .gl span{position:absolute;right:0;top:-15px;font-size:10px;color:var(--tx3)}
+.cx{display:flex;gap:4px}.cx span{flex:1;text-align:center;font-size:10px;color:var(--tx3)}
+.cx span.t{color:var(--tx);font-weight:600}
+.wk{display:flex;gap:6px;margin-top:10px}
+.wk div{flex:1;text-align:center;font-size:11px;color:var(--tx2)}
+.wk b{display:flex;align-items:center;justify-content:center;height:38px;border-radius:12px;background:var(--bg);border:.5px solid var(--line);font-size:11px;font-weight:600;color:var(--tx3);margin-bottom:4px}
+.wk b.on{background:var(--gbg);border-color:var(--g);color:var(--gtx)}
+.wk b.td{border:1.5px solid var(--tx2)}
 .demo{font-size:12px;color:var(--otx);background:var(--obg);border-radius:10px;padding:6px 10px;margin-top:8px}
 </style>
 </head>
@@ -139,6 +152,29 @@ nav a.on{color:var(--g2)}
   <div class="card" id="sBook"></div>
   <div class="card"><div class="h">Хвосты</div><div id="sTails"></div></div>
 </main>
+<main id="health" style="display:none">
+  <div class="top"><div><p class="date">сон · зал · еда</p><h1>Здоровье</h1></div><button class="sync" onclick="load(true)">обновить</button></div>
+  <div class="pills" id="hPills"></div>
+  <div class="card"><div class="h">Сон <span class="u" id="hSleepAvg"></span></div>
+    <p class="vl" style="font-size:32px" id="hSleep">–</p><p class="lb" id="hSleepSub">&nbsp;</p>
+    <div class="chart" id="hSleepChart"></div><div class="cx" id="hSleepX"></div>
+    <div class="grid" style="margin-top:12px">
+      <div><p class="lb">Долг за 7 ночей</p><p class="vl" id="hDebt" style="font-size:18px">–</p></div>
+      <div><p class="lb">Средний отбой</p><p class="vl" id="hBed" style="font-size:18px">–</p></div></div>
+    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="tab='Сон';openSheet()">Записать сон</button></div>
+  <div class="card"><div class="h">Зал на неделе <span class="u" id="hGymT"></span></div>
+    <div class="bar" style="height:8px"><i id="hGymBar" style="width:0"></i></div>
+    <div class="wk" id="hWeek"></div>
+    <p class="lb" id="hGymSub" style="margin-top:8px">&nbsp;</p>
+    <button class="btn" style="width:100%;margin-top:10px" id="hGymBtn" onclick="tab='Зал';openSheet()">Отметить зал</button></div>
+  <div class="card"><div class="h">Еда сегодня <span class="u" id="hFoodAvg"></span></div>
+    <div class="grid" style="margin-top:4px">
+      <div><p class="lb">Белок</p><p class="vl" id="hProt">–</p><div class="bar"><i id="hProtBar" style="width:0"></i></div></div>
+      <div><p class="lb">Калории</p><p class="vl" id="hKcal">–</p><div class="bar"><i id="hKcalBar" style="width:0;background:var(--o)"></i></div></div></div>
+    <p class="lb" style="margin-top:14px">Белок за 14 дней</p>
+    <div class="chart" id="hProtChart"></div><div class="cx" id="hProtX"></div>
+    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="tab='Еда';openSheet()">Записать еду</button></div>
+</main>
 <main id="soon" style="display:none"><div class="soon"><h1 id="soonT"></h1><p>Эта вкладка будет следующей.</p></div></main>
 
 <nav><div class="in">
@@ -147,6 +183,7 @@ nav a.on{color:var(--g2)}
   <button class="plus" onclick="openSheet()" aria-label="Добавить">+</button>
   <a href="#" data-t="money2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Деньги</a>
   <a href="#" data-t="study"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Учёба</a>
+  <a href="#" data-t="health"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M8 12h2l1-2 2 4 1-2h2"/></svg>Здоровье</a>
 </div></nav>
 
 <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sh">
@@ -252,7 +289,7 @@ function render(){
   $('rt').innerHTML=[1,2,3,4,5].map(n=>'<span class="'+(n===score?'s':'')+'" data-n="'+n+'">'+n+'</span>').join('');
   $('rt').querySelectorAll('span').forEach(el=>el.onclick=()=>{score=+el.dataset.n;$('rt').querySelectorAll('span').forEach(x=>x.classList.toggle('s',x===el));});
   if (rv && document.activeElement!==$('revNote')) $('revNote').value = rv.note||'';
-  renderContent(); renderMoney(); renderStudy();
+  renderContent(); renderMoney(); renderStudy(); renderHealth();
   $('revHint').textContent = rv ? 'сохранён' : (now.getHours()>=18 ? 'пора подвести' : 'вечером');
 }
 
@@ -265,6 +302,7 @@ const FORMS = {
   'Расход': ()=>'<input id="fSum" type="number" inputmode="numeric" placeholder="Сумма, ₸"><div class="chips" id="fCat">'+['еда','такси','кафе','продукты','подписки','другое'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><input id="fNote" placeholder="Заметка (можно пусто)"><button class="btn" onclick="sendExpense()">Записать расход</button>',
   'Еда': ()=>'<div class="add" style="margin:0"><input id="fP" type="number" inputmode="numeric" placeholder="Белок, г"><input id="fK" type="number" inputmode="numeric" placeholder="Ккал"></div><input id="fW" placeholder="Что ел"><button class="btn" onclick="sendFood()">Записать еду</button>',
   'Зал': ()=>{ const n=nextGym(); return '<p class="lb" style="margin:0">По плану Push → Pull → Upper, это '+(gymCount()+1)+'-я тренировка недели</p><div class="chips" id="fGym">'+['Push','Pull','Upper'].map(c=>'<span'+(c===n?' class="s"':'')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendGym()">Отметить: '+n+'</button>'; },
+  'Сон': ()=>'<div class="add" style="margin:0"><label style="flex:1"><span class="lb">Лёг</span><input id="fBed" type="time" value="00:30"></label><label style="flex:1"><span class="lb">Встал</span><input id="fWake" type="time" value="08:00"></label></div><p class="lb" id="fSlH" style="margin:0"></p><button class="btn" onclick="sendSleep()">Записать сон</button>',
   'Дело': ()=>'<input id="fT" placeholder="Что сделать"><button class="btn" onclick="sendTask()">Добавить дело</button>',
   'Рилс': ()=>'<input id="fR" placeholder="Название рилса"><div class="chips" id="fRS">'+['вышел','монтаж','снять','идея'].map((c,i)=>'<span'+(i?'':' class="s"')+'>'+c+'</span>').join('')+'</div><button class="btn" onclick="sendReel()">Записать рилс</button>'
 };
@@ -278,6 +316,7 @@ function drawSheet(){
   $('seg').querySelectorAll('span').forEach(el=>el.onclick=()=>{tab=el.textContent;drawSheet();});
   $('form').innerHTML=FORMS[tab]();
   $('form').querySelectorAll('.chips').forEach(c=>c.querySelectorAll('span').forEach(el=>el.onclick=()=>{c.querySelectorAll('span').forEach(x=>x.classList.remove('s'));el.classList.add('s');}));
+  if (tab==='Сон'){ const u=()=>{const h=slHours();$('fSlH').textContent=h?'Выходит '+String(h).replace('.',',')+' ч':'';}; $('fBed').oninput=$('fWake').oninput=u; u(); return; }
   const first=$('form').querySelector('input'); if(first) setTimeout(()=>first.focus(),50);
 }
 const chip = id => { const s=$(id).querySelector('.s'); return s?s.textContent:''; };
@@ -285,15 +324,59 @@ async function done(p){ if(await p) closeSheet(); }
 function sendExpense(){ const s=+$('fSum').value; if(!s){toast('Введи сумму');return;} done(post({a:'expense',sum:s,cat:chip('fCat'),note:$('fNote').value.trim()},'Расход записан')); }
 function sendFood(){ const p=+$('fP').value||0,k=+$('fK').value||0; if(!p&&!k){toast('Введи белок или ккал');return;} done(post({a:'food',protein:p,kcal:k,what:$('fW').value.trim()},'Еда записана')); }
 function sendGym(){ done(post({a:'gym',what:chip('fGym')},'Зал отмечен 💪')); }
+function slHours(){ const t=v=>{const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null;}; const a=t($('fBed').value),b=t($('fWake').value); if(a==null||b==null)return null; let d=b-a; if(d<=0)d+=1440; return Math.round(d/6)/10; }
+function sendSleep(){ const h=slHours(); if(!h){toast('Укажи время');return;} done(post({a:'sleep',bed:$('fBed').value,wake:$('fWake').value},'Сон записан: '+String(h).replace('.',',')+' ч')); }
 function sendTask(){ const v=$('fT').value.trim(); if(!v){toast('Напиши дело');return;} done(post({a:'task_add',text:v},'Дело добавлено')); }
 function sendReel(){ const v=$('fR').value.trim()||'рилс'; done(post({a:'reel',title:v,status:chip('fRS')},'Рилс записан 🎬')); }
 
 // вкладки
 document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();
   document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x===a));
-  const t=a.dataset.t; ['today','content','money2','study','soon'].forEach(id=>$(id).style.display='none');
-  if (t==='today'||t==='content'||t==='money2'||t==='study') $(t).style.display=''; else { $('soon').style.display=''; $('soonT').textContent=t; }
+  const t=a.dataset.t; ['today','content','money2','study','health','soon'].forEach(id=>$(id).style.display='none');
+  if (['today','content','money2','study','health'].includes(t)) $(t).style.display=''; else { $('soon').style.display=''; $('soonT').textContent=t; }
   window.scrollTo(0,0);});
+
+// ---------- Здоровье ----------
+const D1 = ['вс','пн','вт','ср','чт','пт','сб'], WKD = ['пн','вт','ср','чт','пт','сб','вс'];
+const c1 = n => n==null?'–':String(Math.round(n*10)/10).replace('.',',');
+function chart(H, el, xel, vals, goal, max, color){
+  $(el).innerHTML = H.map((d,i)=>{ const v=vals[i]; return '<div class="c'+(v==null?' no':'')+'" title="'+d.date+'"><i style="height:'+(v==null?3:Math.max(4,Math.min(100,v/max*100)))+'%;'+(v!=null?'background:'+color(v):'')+'"></i></div>'; }).join('')
+    + (goal?'<div class="gl" style="bottom:'+(goal/max*100)+'%"><span>'+c1(goal)+'</span></div>':'');
+  $(xel).innerHTML = H.map((d,i)=>'<span'+(d.date===data.today?' class="t"':'')+'>'+(i%2===H.length%2||d.date===data.today?+d.date.slice(8):'')+'</span>').join('');
+}
+function renderHealth(){
+  const h=(data&&data.health&&!data.health.error)?data.health:{}, s=h.sleep||{}, g=h.gym||{}, f=h.food||{}, st=data.streaks||{};
+  if (!h.hist) h.hist=[];
+  const pills=[];
+  if (st.gymWeeks) pills.push(['g','🔥 зал '+st.gymWeeks+' нед. подряд']);
+  if (st.proteinDays) pills.push(['b','🔥 белок '+st.proteinDays+' дн. подряд']);
+  if (s.avg7!=null) pills.push([s.avg7>=s.goal?'g':s.avg7>=s.goal-1?'o':'r','сон в среднем '+c1(s.avg7)+' ч']);
+  $('hPills').innerHTML = pills.map(p=>'<span class="pill '+p[0]+'">'+p[1]+'</span>').join('');
+  // сон
+  const sl=s.last, goal=s.goal||7.5;
+  $('hSleep').innerHTML = sl&&sl.today ? c1(sl.hours)+'<span class="u"> ч этой ночью</span>' : '–<span class="u"> сегодня не записан</span>';
+  $('hSleepSub').textContent = sl ? (sl.today?'':'последняя запись '+dd(sl.date)+': '+c1(sl.hours)+' ч · ')+'лёг '+sl.bed+' · встал '+sl.wake : 'записей пока нет';
+  $('hSleepAvg').textContent = s.avg7!=null ? 'за 7 ночей '+c1(s.avg7)+' ч' : '';
+  $('hDebt').innerHTML = s.debt7!=null ? c1(s.debt7)+'<span class="u"> ч</span>' : '–';
+  $('hDebt').style.color = s.debt7>5?'var(--rtx)':s.debt7>2?'var(--otx)':'';
+  $('hBed').textContent = s.avgBed||'–';
+  chart(h.hist,'hSleepChart','hSleepX', h.hist.map(d=>d.sleep), goal, 10, v=>v>=goal?'var(--g)':v>=goal-1?'var(--o)':'var(--r)');
+  // зал
+  const gg=g.goal||3, cnt=g.count||0;
+  $('hGymT').textContent = cnt+' / '+gg; $('hGymBar').style.width=pct(cnt,gg);
+  const days=g.days||[];
+  $('hWeek').innerHTML = WKD.map((w,i)=>{ const d=days[i]||{}; return '<div><b class="'+(d.done?'on':'')+(i===g.dowToday?' td':'')+'">'+(d.done?esc(String(d.what).slice(0,5)):i>g.dowToday?'':'·')+'</b>'+w+'</div>'; }).join('');
+  const left=Math.max(0,gg-cnt), daysLeft=6-(g.dowToday??6)+(g.today?0:1);
+  $('hGymSub').textContent = g.today ? 'Сегодня уже был ✓'+(left?' · осталось '+left:' · неделя закрыта 💪')
+    : left ? 'Осталось '+left+' за '+daysLeft+' дн. · следующая: '+nextGym()+(g.last?' · прошлая '+dd(g.last.date):'') : 'Неделя закрыта 💪';
+  $('hGymBtn').style.display = g.today?'none':'';
+  // еда
+  const ft=f.today||{}, gp=f.goalProtein||140, gk=f.goalKcal||2900;
+  $('hProt').innerHTML = nf(ft.protein||0)+'<span class="u"> / '+gp+' г</span>'; $('hProtBar').style.width=pct(ft.protein||0,gp);
+  $('hKcal').innerHTML = nf(ft.kcal||0)+'<span class="u"> / '+nf(gk)+'</span>'; $('hKcalBar').style.width=pct(ft.kcal||0,gk);
+  $('hFoodAvg').textContent = f.avgProtein7!=null ? 'белок за 7 дн. ~'+nf(f.avgProtein7)+' г' : '';
+  chart(h.hist,'hProtChart','hProtX', h.hist.map(d=>d.protein), gp, Math.max(gp*1.3, ...h.hist.map(d=>d.protein||0)), v=>v>=gp?'var(--g)':v>=gp*0.75?'var(--o)':'var(--r)');
+}
 
 // ---------- Учёба ----------
 const DOWS = ['вс','пн','вт','ср','чт','пт','сб'];
@@ -373,7 +456,12 @@ $('newIdea').addEventListener('keydown',e=>{if(e.key==='Enter')addIdea();});
 
 function demo(){ const t=new Date().toISOString().slice(0,10); return {today:t,
   fin:{now:1250000,forecast:2100000,goal:3000000,progress:0.7,month:'2026-11',monthSpend:320000,monthIncome:600000,incoming:900000,payments:450000},
-  health:{sleep:{last:{today:true,hours:6.5,bed:'01:30',wake:'08:00'}},gym:{count:1,goal:3,today:false},food:{today:{protein:92},goalProtein:140}},
+  health:(()=>{ const hist=[],sl=[7.5,6,8,5.5,7,6.5,8.5,7,6,null,7.5,6.5,5,6.5],pr=[150,120,90,140,160,110,null,130,145,100,155,120,135,92];
+    for(let i=13;i>=0;i--){const k=new Date(Date.now()-i*864e5).toISOString().slice(0,10);hist.push({date:k,sleep:sl[13-i],protein:pr[13-i],kcal:pr[13-i]?pr[13-i]*18:null});}
+    const dow=(new Date().getDay()+6)%7;
+    return {sleep:{last:{date:t,today:true,hours:6.5,bed:'01:30',wake:'08:00'},avg7:6.6,goal:7.5,debt7:7.1,avgBed:'01:10'},
+      gym:{count:1,goal:3,today:false,dowToday:dow,days:[0,1,2,3,4,5,6].map(i=>({done:i===0&&dow>0,what:i===0?'Push':null})),last:{date:t,what:'Push'}},
+      food:{today:{protein:92,kcal:1650},goalProtein:140,goalKcal:2900,avgProtein7:126},hist}; })(),
   streaks:{gymWeeks:4,proteinDays:5}, reels:{week:1,goal:3,streakWeeks:2,pipeline:[{row:2,title:'Влог: неделя видеографа',status:'монтаж'},{row:3,title:'Разговорный: про утро',status:'снять'},{row:4,title:'Дисциплина в 20 лет',status:'идея'}],recent:[{title:'Влог: последний выезд'}]},
   cal:[{start:'10:00',title:'Пара'},{start:'15:00',title:'Съёмка'},{start:'19:00',title:'Зал'}],
   tasks:[{row:2,text:'Скинуть превью клиенту',done:true},{row:3,text:'Смонтировать рилс',done:false},{row:4,text:'IELTS reading',done:false},{row:5,text:'Написать 10 агентствам',done:false,old:true}],
