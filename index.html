@@ -94,6 +94,11 @@ nav a.on{color:var(--g2)}
 .ct{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
 .ct .n{width:84px;flex:none;color:var(--tx2)}.ct .bar{flex:1;margin:0}.ct .s{width:78px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
 .dh{display:flex;justify-content:space-between;font-size:12px;color:var(--tx2);font-weight:600;margin:12px 0 0;padding-bottom:4px}
+.undo{position:fixed;left:50%;transform:translate(-50%,20px);bottom:calc(env(safe-area-inset-bottom) + 140px);width:calc(100% - 32px);max-width:488px;background:var(--tx);color:var(--bg);border-radius:16px;padding:6px 6px 6px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
+.undo.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.undo button{font:inherit;font-weight:600;border:0;background:none;color:#97c459;padding:10px 12px}
+.btn:disabled{opacity:.5}
+.del{border:0;background:none;color:var(--tx3);font-size:18px;padding:0 0 0 10px;line-height:1}
 .demo{font-size:12px;color:var(--otx);background:var(--obg);border-radius:10px;padding:6px 10px;margin-top:8px}
 </style>
 </head>
@@ -202,6 +207,7 @@ nav a.on{color:var(--g2)}
   <div class="f" id="form"></div>
 </div></div>
 <div class="toast" id="toast"></div>
+<div class="undo" id="undo"><span id="undoT"></span><button id="undoB">Отменить</button></div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -254,12 +260,28 @@ async function load(manual){
   }
 }
 
+let busy = false;
+const FREE = ['task_toggle','content_status','reel_status','study_done','book_page'];
 async function post(body, ok){
-  if (DEMO){ toast('Демо: '+ok); return true; }
+  const guard = !FREE.includes(body.a);
+  if (guard && busy){ toast('Секунду, записываю…'); return false; }
+  if (guard){ busy = true; document.querySelectorAll('#form .btn').forEach(b=>b.disabled=true); }
   try{
+    if (DEMO){ await new Promise(r=>setTimeout(r,400)); if(guard) undoBar(ok, body.a==='undo'?null:{u:'demo'}); else toast('Демо: '+ok); return true; }
     const j = await jsonp({w:'do', d:JSON.stringify(body)}, 30000); if (j.error) throw j.error;
-    toast(ok); load(); return true;
+    if (j.undo) undoBar(ok, j.undo); else toast(ok);
+    load(); return true;
   }catch(e){ toast('Ошибка: '+e); return false; }
+  finally{ if (guard){ busy = false; document.querySelectorAll('#form .btn').forEach(b=>b.disabled=false); } }
+}
+let _ut = null;
+function undoBar(text, t){
+  const e = $('undo'); clearTimeout(_ut);
+  $('undoT').textContent = text; $('undoB').style.display = t ? '' : 'none';
+  $('undoB').onclick = async () => { e.classList.remove('on'); clearTimeout(_ut);
+    if (DEMO){ toast('Демо: отменено'); return; }
+    await post({a:'undo', t}, 'Отменено ↩'); };
+  e.classList.add('on'); _ut = setTimeout(()=>e.classList.remove('on'), 8000);
 }
 
 function render(){
@@ -531,7 +553,7 @@ function renderMoney(){
   rec.forEach(e=>(days[e.date]=days[e.date]||[]).push(e));
   const dname = k => { const n=Math.round((new Date(data.today+'T12:00:00')-new Date(k+'T12:00:00'))/864e5); return n===0?'Сегодня':n===1?'Вчера':DOWS[new Date(k+'T12:00:00').getDay()]+', '+dd(k); };
   $('eList').innerHTML = rec.length ? Object.keys(days).slice(0,7).map(k=>'<div class="dh"><span>'+dname(k)+'</span><span>−'+nf(days[k].reduce((a,e)=>a+e.amount,0))+' ₸</span></div>'
-    + days[k].map(e=>'<div class="rw"><span>'+esc(e.note||e.cat||'расход')+(e.note&&e.cat?'<br><span class="lb">'+esc(e.cat)+'</span>':'')+'</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">−'+nf(e.amount)+' ₸</span></div>').join('')).join('')
+    + days[k].map(e=>'<div class="rw"><span>'+esc(e.note||e.cat||'расход')+(e.note&&e.cat?'<br><span class="lb">'+esc(e.cat)+'</span>':'')+'</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap;display:flex;align-items:center">−'+nf(e.amount)+' ₸'+(e.app?'<button class="del" aria-label="Удалить" onclick="delExpense('+e.row+','+e.amount+')">✕</button>':'')+'</span></div>').join('')).join('')
     : '<div class="empty">Расходов за 2 недели нет. Жми «+ расход»</div>';
   const ow = m.owed||[]; $('fOwedT').textContent = ow.length ? '+'+nf(m.owedTotal)+' ₸' : '';
   const ye = (data.today||'').slice(0,4)+'-12-31', inY = ow.filter(o=>!o.date||o.date<=ye).reduce((a,o)=>a+(o.amount||0),0);
@@ -572,6 +594,7 @@ function renderContent(){
         +(x.todo?'<br><span class="lb">→ '+esc(x.todo)+'</span>':'')+'</span><span class="pill g" style="cursor:pointer" onclick="cStatus('+x.row+',\'сделано\')">✓</span></div>'; }).join('')
       : '<div class="empty">Сохраняй через «В мозг» в меню «Поделиться» — разберу и покажу тут, что попробовать</div>');
 }
+function delExpense(row, amount){ if (!confirm('Удалить расход −'+nf(amount)+' ₸?')) return; post({a:'expense_del',row,amount},'Расход удалён'); }
 function cStatus(row,st){ post({a:'content_status',row,status:st}, st==='архив'?'В архиве':'Отмечено ✓'); }
 function rStatus(row,st){ const n=NEXT[st]||'вышел'; post({a:'reel_status',row,status:n}, n==='вышел'?'Рилс вышел 🎬':'Теперь: '+n); }
 function addIdea(){ const v=$('newIdea').value.trim(); if(!v)return; $('newIdea').value=''; post({a:'idea',title:v},'Идея записана'); }
@@ -590,7 +613,7 @@ function demo(){ const t=new Date().toISOString().slice(0,10); return {today:t,
   tasks:[{row:2,text:'Скинуть превью клиенту',done:true},{row:3,text:'Смонтировать рилс',done:false},{row:4,text:'IELTS reading',done:false},{row:5,text:'Написать 10 агентствам',done:false,old:true}],
   money:{payments:[{date:t,what:'Обязательный платёж',amount:58000}],owed:[{who:'Клиент А',date:t,amount:200000},{who:'Клиент Б',date:t,amount:150000}],owedTotal:350000,spentToday:4200,spentWeek:23700,spentMonth:320000,
     byCat:[{cat:'еда',sum:95000},{cat:'такси',sum:62000},{cat:'кафе',sum:48000},{cat:'подписки',sum:21000},{cat:'другое',sum:15000}],
-    recent:[{row:9,date:t,amount:2700,cat:'еда',note:'завтрак: сырники и кофе'},{row:8,date:t,amount:1500,cat:'такси',note:''},
+    recent:[{row:9,date:t,amount:2700,app:true,cat:'еда',note:'завтрак: сырники и кофе'},{row:8,date:t,amount:1500,app:true,cat:'такси',note:''},
       {row:7,date:new Date(Date.now()-864e5).toISOString().slice(0,10),amount:12000,cat:'продукты',note:'супермаркет'},{row:6,date:new Date(Date.now()-864e5).toISOString().slice(0,10),amount:7500,cat:'кафе',note:'с друзьями'}]},
   content:{inbox:2,total:4,shelves:{'идея':1,'монтаж':1},items:[{row:5,date:t,url:'https://www.instagram.com/reel/demo1/',shelf:'',sum:'',todo:'',status:'новое'},{row:4,date:t,url:'https://vt.tiktok.com/demo/',shelf:'',sum:'',todo:'',status:'новое'},{row:3,date:t,url:'https://www.instagram.com/reel/demo2/',shelf:'идея',sum:'Формат «день из жизни» с цифрами на экране',todo:'снять в четверг',status:'разобрано'},{row:2,date:t,url:'https://www.instagram.com/reel/demo3/',shelf:'монтаж',sum:'Переход через вспышку + звук щелчка',todo:'попробовать в ролике клиента',status:'разобрано'}]},
   study:{classes:[{date:t,start:'08:30',title:'Пара 1'},{date:t,start:'16:30',title:'Пара 2'}],items:[{row:2,date:'',what:'Финал по предмету',type:'экзамен',note:'декабрь'},{row:3,date:'весна 2027',what:'Хвост: предмет',type:'хвост'}],ielts:2,ieltsGoal:5,book:{row:2,title:'Книга',author:'Автор',page:80,total:250},booksDone:1},
